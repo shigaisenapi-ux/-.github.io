@@ -1,0 +1,147 @@
+[index.html](https://github.com/user-attachments/files/23952567/index.html)
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>紫外線チェック</title>
+
+    <!-- かわいい丸フォント（Kosugi Maru）読み込み -->
+    <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: "Kosugi Maru", "Hiragino Maru Gothic ProN", "Meiryo", sans-serif;
+            background: #fff5f7;
+            padding: 20px;
+            max-width: 480px;
+            width: 90%;
+            margin: auto;
+            color: #444;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 26px;
+            color: #ff8fb1;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: #ffffff;
+            color: #000;
+            border: none;
+            padding: 16px 28px;
+            border-radius: 20px;
+            font-size: 20px;
+            font-family: "Kosugi Maru", "Hiragino Maru Gothic ProN", "Meiryo", sans-serif;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(255, 120, 150, 0.4);
+            transition: transform 0.1s ease;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        #result {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 25px;
+            color: #555;
+            white-space: pre-line;
+            transition: background-color 0.3s, color 0.3s;
+            box-shadow: 0 2px 8px rgba(200, 150, 180, 0.2);
+        }
+
+        /* 小さいスマホ向け */
+        @media (max-width: 360px) {
+            h1 { font-size: 22px; }
+            button { font-size: 18px; padding: 12px 20px; }
+            #result { font-size: 16px; }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>紫外線チェック</h1>
+
+    <button onclick="getUV()">現在地の紫外線をチェック！</button>
+
+    <div id="result">ここに結果を表示</div>
+
+    <script>
+        async function getUV() {
+            const resultDiv = document.getElementById("result");
+
+            if (!navigator.geolocation) {
+                resultDiv.innerText = "位置情報がサポートされていません";
+                return;
+            }
+
+            resultDiv.innerText = "位置情報を取得中…";
+            resultDiv.style.backgroundColor = "#fff";
+            resultDiv.style.color = "#555";
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                const apiKey = "openuv-16kthmasrmi3tld6x-io";
+                const url = `https://api.openuv.io/api/v1/uv?lat=${lat}&lng=${lng}`;
+
+                try {
+                    const response = await fetch(url, {
+                        headers: { "x-access-token": apiKey }
+                    });
+                    const data = await response.json();
+
+                    if (data.result && data.result.uv !== undefined) {
+                        const uv = data.result.uv;
+                        let advice = "";
+                        let bgColor = "#fff";
+                        let textColor = "#555";
+
+                        if (uv <= 2) {
+                            advice = "SPF: 10～20, PA: PA+\nおすすめシーン: 軽い外出や屋内中心の日。日焼け止めは軽くでOK！";
+                            bgColor = "#cceeff";
+                            textColor = "#004080";
+                        } else if (uv <= 5) {
+                            advice = "SPF: 20～30, PA: PA+ ～ PA++\nおすすめシーン: 散歩や短時間の外出に安心！";
+                            bgColor = "#fff8b3";
+                            textColor = "#665500";
+                        } else if (uv <= 7) {
+                            advice = "SPF: 30～50, PA: PA++ ～ PA+++\nおすすめシーン: 公園や軽い運動でしっかり対策を！";
+                            bgColor = "#ffcc99";
+                            textColor = "#663300";
+                        } else if (uv <= 10) {
+                            advice = "SPF: 50+, PA: PA+++ ～ PA++++\nおすすめシーン: 海・山・長時間外出は強い日差し注意！";
+                            bgColor = "#ff9999";
+                            textColor = "#660000";
+                        } else {
+                            advice = "SPF: 50+, PA: PA++++\nおすすめシーン: 最強レベル！長時間外なら頻繁に塗り直し必須！";
+                            bgColor = "#cc99ff";
+                            textColor = "#330066";
+                        }
+
+                        resultDiv.innerText = "現在の UV 指数： " + uv + "\n\n" + advice;
+                        resultDiv.style.backgroundColor = bgColor;
+                        resultDiv.style.color = textColor;
+
+                    } else {
+                        resultDiv.innerText = "データ取得に失敗しました…";
+                    }
+                } catch (e) {
+                    resultDiv.innerText = "エラーが発生しました";
+                }
+
+            }, (error) => {
+                resultDiv.innerText = "位置情報の取得に失敗しました: " + error.message;
+            });
+        }
+    </script>
+
+</body>
+</html>
